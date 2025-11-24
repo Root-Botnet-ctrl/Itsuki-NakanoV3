@@ -5,8 +5,8 @@ import moment from 'moment-timezone'
 
 var handler = m => m
 handler.all = async function (m) { 
-global.canalIdM = ["120363403726798403@newsletter", "120363403726798403@newsletter"]
-global.canalNombreM = ["꒰  📚 𝑵𝒊𝒏𝒐 𝑵𝒂𝒌𝒂𝒏𝒐-𝑰𝑨 🌸 ꒱ • 𝑪𝒉𝒂𝒏𝒏𝒆𝒍 𝑶𝒇𝒊𝒄𝒊𝒂𝒍 🍒✨️", "𝆺𝅥 𝆭 ִ ֗ 🍒 𝙏𝙝𝙚 𝙉𝙞𝙣𝙤 𝙉𝙖𝙠𝙖𝙣𝙤-𝙄𝘼 ┆ 𝘾𝙝𝙖𝙣𝙣𝙚𝙡 𝙊𝙛𝙞𝙘𝙞𝙖𝙡 ✨ ౨ৎ˚₊‧"]
+global.canalIdM = ["120363404434164076@newsletter", "120363404434164076@newsletter"]
+global.canalNombreM = ["꒰ ❄️ ITՏᑌKI ᑎᗩKᗩᑎO-ᐯ3 ᑌᑭᗪᗩTᗴ ☃️ ꒱", "𝆺𝅥 𝆭 ִ ֗ ❄ 𝐋𝐚𝐬 𝐐𝐮𝐢𝐧𝐭𝐢𝐥𝐥𝐢𝐬𝐚𝐬-𝐍𝐨𝐯𝐞𝐝𝐚𝐝𝐞 📢 ┆ 𝐂𝐡𝐚𝐧𝐧𝐞𝐥-𝐈𝐧𝐟𝐨 ☃️ ˚₊‧"]
 global.channelRD = await getRandomChannel()
 
 global.d = new Date(new Date + 3600000)
@@ -19,13 +19,13 @@ global.tiempo = d.toLocaleString('en-US', {hour: 'numeric', minute: 'numeric', s
 
 var canal = 'https://whatsapp.com/channel/0029VbBBXTr5fM5flFaxsO06'  
 var comunidad = 'https://chat.whatsapp.com/BXxWuamOOE4K9eKC623FIO'
-var git = 'https://github.com/xzzys26'
-var github = 'https://github.com/xzzys26/NinoNakano-IA' 
+var git = 'https://github.com/leoxito'
+var github = 'https://github.com/leoxito/Itsuki-NakanoV2'
 var correo = 'xzzysultra@gmail.com'
 global.redes = [canal, comunidad, git, github, correo].getRandom()
 
-global.nombre = m.pushName || 'Anónimo'
-global.packsticker = `𝐍𝐢𝐧𝐨 🍒✨`
+global.nombre = m.pushName || 'User-MD'
+global.packsticker = ``
 
 // Añadido global.icono
 global.icono = 'https://files.catbox.moe/ncb958.jpg'
