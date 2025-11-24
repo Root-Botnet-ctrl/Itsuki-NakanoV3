@@ -69,6 +69,87 @@ function isPremiumJid(jid) {
   return !!u?.premium
 }
 
+// Función parseUserTargets - AGREGADA
+function parseUserTargets(input, options = {}) {
+    try {
+        if (!input || input.trim() === '') return [];
+        
+        const defaults = {
+            allowLids: true,
+            resolveMentions: true,
+            groupJid: null,
+            maxTargets: 50
+        };
+        const opts = { ...defaults, ...options };
+        
+        // Si ya es un array, devolverlo limpiando
+        if (Array.isArray(input)) {
+            return input.map(jid => normalizeJid(jid)).filter(jid => jid);
+        }
+        
+        // Si es string, procesarlo
+        if (typeof input === 'string') {
+            let targets = [];
+            
+            // Procesar menciones si están disponibles y se solicita
+            if (opts.resolveMentions && m && m._mentionedJidResolved && m._mentionedJidResolved.length > 0) {
+                targets.push(...m._mentionedJidResolved.map(jid => normalizeJid(jid)));
+            }
+            
+            // Procesar texto para extraer números/JIDs
+            const textTargets = input.split(/[,;\s\n]+/).map(item => item.trim()).filter(item => item);
+            
+            for (let item of textTargets) {
+                // Si es una mención (@usuario)
+                if (item.startsWith('@')) {
+                    const num = item.substring(1);
+                    if (num) {
+                        const jid = `${num}@s.whatsapp.net`;
+                        targets.push(jid);
+                    }
+                    continue;
+                }
+                
+                // Si es un número de teléfono
+                if (/^[\d+][\d\s\-()]+$/.test(item)) {
+                    const cleanNum = item.replace(/[^\d+]/g, '');
+                    if (cleanNum.length >= 8) {
+                        const jid = `${cleanNum.replace(/^\+/, '')}@s.whatsapp.net`;
+                        targets.push(jid);
+                    }
+                    continue;
+                }
+                
+                // Si ya parece un JID
+                if (item.includes('@')) {
+                    targets.push(normalizeJid(item));
+                    continue;
+                }
+                
+                // Para otros casos, tratar como número
+                if (/^\d+$/.test(item) && item.length >= 8) {
+                    targets.push(`${item}@s.whatsapp.net`);
+                }
+            }
+            
+            // Eliminar duplicados y limpiar
+            targets = [...new Set(targets.map(jid => normalizeJid(jid)).filter(jid => jid))];
+            
+            // Limitar número máximo de targets
+            if (opts.maxTargets && targets.length > opts.maxTargets) {
+                targets = targets.slice(0, opts.maxTargets);
+            }
+            
+            return targets;
+        }
+        
+        return [];
+    } catch (error) {
+        console.error('Error en parseUserTargets:', error);
+        return [];
+    }
+}
+
 export async function handler(chatUpdate) {
   this.msgqueque = this.msgqueque || []
   if (!chatUpdate) return
@@ -360,6 +441,38 @@ export async function handler(chatUpdate) {
 
       // Si no tenemos nombre o es solo números, mostramos el número formateado
       return num
+    }
+
+    // Función getUserInfo - AGREGADA
+    const getUserInfo = async (jid, options = {}) => {
+        try {
+            const normalizedJid = normalizeJid(jid);
+            if (!normalizedJid) return null;
+            
+            const user = global.db.data.users[normalizedJid];
+            const name = await nameOf(normalizedJid);
+            const roles = await roleFor(normalizedJid);
+            const badges = await badgeFor(normalizedJid);
+            
+            return {
+                jid: normalizedJid,
+                name: name || prettyNum(normalizedJid),
+                number: prettyNum(normalizedJid),
+                exp: user?.exp || 0,
+                limit: user?.limit || 0,
+                premium: user?.premium || false,
+                registered: user?.registered || false,
+                banned: user?.banned || false,
+                level: user?.level || 0,
+                bank: user?.bank || 0,
+                ...roles,
+                badges,
+                displayTag: await displayTag(normalizedJid)
+            };
+        } catch (error) {
+            console.error('Error en getUserInfo:', error);
+            return null;
+        }
     }
 
     const senderNum = normalizeCore(m.sender)
