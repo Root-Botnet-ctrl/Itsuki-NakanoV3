@@ -198,8 +198,8 @@ const handler = async (m, { conn, command, usedPrefix }) => {
   }
 }
 
-handler.command = ['tourl', 'upload', 'subir']
-handler.help = ['tourl <responder a archivo>']
+handler.command = ['tourl']
+handler.help = ['tourl']
 handler.tags = ['tools']
 handler.rowner = true
 
