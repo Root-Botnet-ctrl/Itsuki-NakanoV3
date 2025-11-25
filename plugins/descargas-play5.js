@@ -5,7 +5,7 @@ const thumbnailUrl = 'https://qu.ax/Asbfq.jpg'
 const handler = async (m, { conn, args, command, usedPrefix }) => {
   const input = args.join(' ').trim()
   if (!input) {
-    await conn.sendMessage(m.chat, { react: { text: '🎄', key: m.key } })
+    await conn.sendMessage(m.chat, { react: { text: '🎵', key: m.key } })
     return conn.reply(m.chat, 
 `> 🎅 *¡NAVIDAD EN YOUTUBE!* 🎁
 
@@ -13,7 +13,7 @@ const handler = async (m, { conn, args, command, usedPrefix }) => {
 
 > ❌ *Uso incorrecto*
 
-\`\`\`Debes ingresar el nombre o enlace del video de YouTube\`\`\`
+> \`\`\`Debes ingresar el nombre o enlace del video de YouTube\`\`\`
 
 > *Ejemplos navideños:*
 > • ${usedPrefix + command} villancicos navideños
