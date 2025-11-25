@@ -1,54 +1,50 @@
 import fetch from 'node-fetch'
 
-/**
- * 🎀 CREADO POR: LeoXzzsy
- * 🌸 ADAPTADO PARA: Itsuki-Nakano IA
- * 📚 VERSIÓN: 3.4.0 Beta
- * 🏷️ DESCARGADOR FACEBOOK
- */
-
 let handler = async (m, { conn, usedPrefix, command, args }) => {
-  const ctxErr = (global.rcanalx || {})
-  const ctxWarn = (global.rcanalw || {})
-  const ctxOk = (global.rcanalr || {})
-
   try {
     if (!args[0]) {
       return conn.reply(m.chat,
-        `🎀 *Itsuki-Nakano IA - Descargador Facebook*\n\n` +
-        `✦ *Uso correcto:*\n` +
-        `*${usedPrefix}fb* <url_de_facebook>\n\n` +
-        `✦ *Ejemplo:*\n` +
-        `*${usedPrefix}fb* https://fb.watch/xxxxx\n\n` +
-        `🌸 *Itsuki te ayudará a descargar el video...* (◕‿◕✿)`,
-      m, ctxWarn)
+        `> 🎄 *¡NAVIDAD EN FACEBOOK!* 🎅
+
+> 🎁 *DESCARGADOR FACEBOOK NAVIDEÑO*
+
+> ❌ *Uso incorrecto*
+
+\`\`\`Debes proporcionar un enlace de Facebook\`\`\`
+
+> *Ejemplos navideños:*
+> • ${usedPrefix + command} https://fb.watch/xxxxx
+> • ${usedPrefix}fb https://facebook.com/xxxxx
+
+> *Comandos disponibles:*
+> • ${usedPrefix}fb <url> - Descargar video
+> • ${usedPrefix}fbaudio <url> - Extraer audio
+
+> 🎅 *¡Itsuki Nakano V3 - Tu asistente navideño!* 🎄`, m)
     }
 
     const url = args[0]
     if (!url.match(/facebook\.com|fb\.watch/)) {
       return conn.reply(m.chat,
-        `🎀 *Itsuki-Nakano IA*\n\n` +
-        `❌ *URL no válida*\n\n` +
-        `✦ Por favor envía un enlace de Facebook válido\n` +
-        `✦ Ejemplo: https://fb.watch/xxxxx\n\n` +
-        `🌸 *Itsuki está confundida...* (´･ω･\`)`,
-      m, ctxErr)
+        `> 🎄 *¡ENLACE INVÁLIDO!* 🎅
+
+> ❌ *URL no válida*
+
+\`\`\`Por favor envía un enlace de Facebook válido\`\`\`
+
+> *Ejemplo correcto:*
+> https://fb.watch/xxxxx
+> https://facebook.com/xxxxx
+
+> 🎅 *¡Itsuki V3 necesita un enlace válido!* 🎄`, m)
     }
 
-    await m.react('📥')
-    
-    // Mensaje de espera
-    await conn.reply(m.chat,
-      `🎀 *Itsuki-Nakano IA*\n\n` +
-      `📥 *Procesando video de Facebook...*\n` +
-      `✦ Analizando enlace...\n` +
-      `✦ Preparando descarga...\n\n` +
-      `🌸 *Por favor espera un momento...* (◕‿◕✿)`,
-    m, ctxWarn)
+    await m.react('🎁')
+    await m.react('🕑') // Emoji de espera
 
     // API de mayapi
     const apiUrl = `https://mayapi.ooguy.com/facebook?url=${encodeURIComponent(url)}&apikey=may-f53d1d49`
-    console.log('🔗 Solicitando a API:', apiUrl)
+    console.log('🎁 Solicitando a API:', apiUrl)
 
     const response = await fetch(apiUrl, {
       timeout: 30000
@@ -85,14 +81,32 @@ let handler = async (m, { conn, usedPrefix, command, args }) => {
     console.log('🎬 URL del video encontrada:', videoUrl)
     console.log('📝 Título:', videoTitle)
 
-    // Enviar el video directamente desde la URL
-    await conn.sendMessage(m.chat, {
-      video: { url: videoUrl },
-      caption: `🎀 *Itsuki-Nakano IA v4.3.1 Oficial*\n` +
-              `╰ Creado por: LeoXzzsy 👑\n\n` +
-              `📹 ${videoTitle}\n` +
-              `⭐ Descargado desde Facebook`
-    }, { quoted: m })
+    // Verificar si es comando de audio
+    const isAudioCommand = command.toLowerCase().includes('audio')
+
+    if (isAudioCommand) {
+      // Convertir video a audio - SIN MENSAJE
+      await conn.sendMessage(m.chat, {
+        audio: { url: videoUrl },
+        mimetype: 'audio/mpeg',
+        fileName: `audio_facebook.mp3`
+      }, { quoted: m })
+    } else {
+      // Enviar el video directamente desde la URL
+      await conn.sendMessage(m.chat, {
+        video: { url: videoUrl },
+        caption: `> 🎄 *¡VIDEO DESCARGADO!* 🎅
+
+> 📹 *Video de Facebook*
+
+> 📝 *Título:* ${videoTitle}
+> 🎬 *Formato:* MP4
+> 🎁 *Calidad:* Original
+
+> 🎅 *¡Itsuki V3 descargó tu video!*
+> 🎄 *¡Feliz Navidad con Itsuki Nakano V3!* 🎁`
+      }, { quoted: m })
+    }
 
     await m.react('✅')
 
@@ -100,26 +114,28 @@ let handler = async (m, { conn, usedPrefix, command, args }) => {
     console.error('❌ Error en descarga Facebook:', error)
 
     await conn.reply(m.chat,
-      `🎀 *Itsuki-Nakano IA*\n\n` +
-      `❌ *Error en la descarga*\n\n` +
-      `✦ *Detalles:* ${error.message}\n\n` +
-      `✦ *Posibles soluciones:*\n` +
-      `• Verifica que el enlace sea correcto\n` +
-      `• El video podría ser privado\n` +
-      `• Intenta con otro enlace\n` +
-      `• Espera un momento y vuelve a intentar\n\n` +
-      `🌸 *Itsuki lo intentará de nuevo...* (´；ω；\`)\n\n` +
-      `🎀 *Itsuki-Nakano IA v3.4.0 Beta*\n` +
-      `╰ Creado por: LeoXzzsy 👑`,
-    m, ctxErr)
+      `> 🎄 *¡ERROR EN DESCARGA!* 🎅
+
+> ❌ *Error en la descarga*
+
+> 📝 *Detalles:* ${error.message}
+
+> 🔍 *Posibles soluciones:*
+> • Verifica que el enlace sea correcto
+> • El video podría ser privado
+> • Intenta con otro enlace
+> • Espera un momento y vuelve a intentar
+
+> 🎅 *Itsuki V3 lo intentará de nuevo...*
+> 🎄 *¡No te rindas!* 🎁`, m)
 
     await m.react('❌')
   }
 }
 
-handler.help = ['fb']
+handler.help = ['fb', 'fbaudio']
 handler.tags = ['downloader']
-handler.command = ['fb', 'facebook', 'fbd', 'fbdl']
-handler.register = true
+handler.command = ['fb', 'facebook', 'fbd', 'fbdl', 'fbaudio', 'facebookaudio']
+handler.register = false
 
 export default handler
