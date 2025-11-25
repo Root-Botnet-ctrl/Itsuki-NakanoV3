@@ -79,19 +79,50 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
       }
     }, { quoted: m });
 
-    // API de video alternativa para evitar error JSON
-    const videoRes = await fetch(`https://api.download-lagu-mp3.com/@api/button/mp4/${encodeURIComponent(link)}`);
-    const videoHtml = await videoRes.text();
-    
-    // Extraer URL del video del HTML (método alternativo)
-    const urlMatch = videoHtml.match(/href="(https:[^"]*\.mp4[^"]*)"/);
-    if (!urlMatch || !urlMatch[1]) {
-      throw new Error('No se pudo obtener el enlace de descarga del video');
+    await conn.sendMessage(m.chat, { react: { text: '📥', key: m.key } })
+
+    let videoUrl = null;
+    let apiUsada = '';
+
+    // PRIMERA API: Vreden (la principal)
+    try {
+      const res1 = await fetch(`https://api.vreden.my.id/api/v1/download/youtube/video?url=${link}&quality=360`);
+      const json1 = await res1.json();
+      if (json1.status && json1.result?.download?.url) {
+        videoUrl = json1.result.download.url;
+        apiUsada = 'Vreden API';
+      }
+    } catch (e) {
+      console.log('❌ API Vreden falló:', e.message);
     }
 
-    const videoUrl = urlMatch[1];
+    // SEGUNDA API: Alternativa del código original (play2)
+    if (!videoUrl) {
+      try {
+        const res2 = await fetch(`https://api.vreden.my.id/api/v1/download/youtube/video?url=${link}&quality=480`);
+        const json2 = await res2.json();
+        if (json2.status && json2.result?.download?.url) {
+          videoUrl = json2.result.download.url;
+          apiUsada = 'Vreden API (480p)';
+        }
+      } catch (e) {
+        console.log('❌ API Vreden 480p falló:', e.message);
+      }
+    }
 
-    await conn.sendMessage(m.chat, { react: { text: '📥', key: m.key } })
+    if (!videoUrl) {
+      await conn.sendMessage(m.chat, { react: { text: '❌', key: m.key } })
+      return m.reply(`> 🎄 *¡ERROR DE VIDEO!* 🎅
+
+> ❌ *No se pudo obtener el video*
+
+> 🎅 *Posibles causas:*
+> • El video podría estar restringido
+> • Problemas temporales con las APIs
+> • Calidad no disponible
+
+> 🎄 *¡Itsuki Nakano V3 lo intentará de nuevo!* 🎁`);
+    }
 
     await conn.sendMessage(
       m.chat,
@@ -104,7 +135,9 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
 > 🏷 *Título:*
 \`\`\`${title}\`\`\`
 > 🌌 *Calidad:*
-\`\`\`360p\`\`\`
+\`\`\`360p/480p\`\`\`
+> 🔧 *Fuente:*
+\`\`\`${apiUsada}\`\`\`
 
 > 🎁 *¡Disfruta de tu contenido navideño!*
 > 🎅 *Itsuki Nakano V3 te desea felices fiestas* 🎄`,
@@ -135,15 +168,6 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
 
 > 📝 *Detalles:*
 \`\`\`${e.message}\`\`\``;
-
-    // Mensaje específico para error JSON
-    if (e.message.includes('Unexpected token') || e.message.includes('JSON')) {
-      errorMessage += `
-
-> 🔧 *Error de API:*
-> • La API de descarga no respondió correctamente
-> • Se intentó método alternativo pero falló`;
-    }
 
     errorMessage += `
 
