@@ -25,69 +25,134 @@ function isGitRepo() {
   try { return fs.existsSync(path.join(ROOT, '.git')) } catch { return false }
 }
 
-// Quoted especial con mini-thumbnail
-async function makeFkontak() {
-  try {
-    const res = await fetch('https://i.postimg.cc/rFfVL8Ps/image.jpg')
-    const thumb2 = Buffer.from(await res.arrayBuffer())
-    return {
-      key: { participants: '0@s.whatsapp.net', remoteJid: 'status@broadcast', fromMe: false, id: 'Halo' },
-      message: { locationMessage: { name: 'Reinicio del Bot', jpegThumbnail: thumb2 } },
-      participant: '0@s.whatsapp.net'
-    }
-  } catch { return null }
+// Guardar información del chat para el mensaje de reconexión
+function saveRestartInfo(chatId) {
+  const restartFile = path.join(ROOT, 'temp', 'restart_info.json')
+  const info = {
+    chatId: chatId,
+    timestamp: Date.now(),
+    type: 'restart'
+  }
+  
+  // Asegurarse de que la carpeta temp existe
+  const tempDir = path.join(ROOT, 'temp')
+  if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir, { recursive: true })
+  }
+  
+  fs.writeFileSync(restartFile, JSON.stringify(info, null, 2))
 }
 
 let handler = async (m, { conn, usedPrefix, command, isOwner, isROwner }) => {
   // Solo owner/root owner
   if (!(isOwner || isROwner)) return
 
-  const fq = (await makeFkontak()) || m
-  try { await conn.reply(m.chat, '', fq, (typeof rcanalw === 'object' ? rcanalw : {})) } catch {}
+  // Guardar información para el mensaje de reconexión
+  saveRestartInfo(m.chat)
+
+  // Emoji de espera
+  await m.react('🕑')
 
   let logs = []
   const pushLog = (title, data) => {
     if (!data) return
     const body = [data.stdout, data.stderr].filter(Boolean).join('\n').trim()
     const trimmed = body.length > 1500 ? body.slice(-1500) : body
-    logs.push(`• ${title}:\n${trimmed || '(sin salida)'}`)
+    logs.push(`> ${title}:\n\`\`\`${trimmed || '(sin salida)'}\`\`\``)
   }
 
   // 1) git pull si aplica
   try {
     if (isGitRepo() && (await hasGit())) {
       const res = await run('git --no-pager pull --rebase --autostash')
-      pushLog('git pull', res)
+      pushLog('🎄 Actualización Git', res)
     } else {
-      logs.push('• git pull: omitido (no es repo o no hay git)')
+      logs.push('> 🎄 Actualización Git: omitido (no es repo o no hay git)')
     }
   } catch (e) {
-    pushLog('git pull (ERROR)', e)
+    pushLog('🎄 Actualización Git (ERROR)', e)
   }
 
   // 2) npm install
   try {
     const res = await run('npm install --no-audit --no-fund')
-    pushLog('npm install', res)
+    pushLog('📦 Instalación de Dependencias', res)
   } catch (e) {
-    pushLog('npm install (ERROR)', e)
+    pushLog('📦 Instalación de Dependencias (ERROR)', e)
   }
 
-  // Resumen al chat
+  // Emoji de éxito antes de reiniciar
+  await m.react('✅')
+
+  // Resumen navideño al chat
   try {
-    const q2 = (await makeFkontak()) || m
     await conn.reply(
       m.chat,
-      `Reiniciando el bot...\n\n${logs.join('\n\n')}`.slice(0, 3500),
-      q2,
-      (typeof rcanalr === 'object' ? rcanalr : {})
+      `> 🎄 *¡ACTUALIZACIÓN COMPLETADA!* 🎅
+
+> ✅ *Procesos finalizados:*
+${logs.join('\n\n')}
+
+> 🎁 *Itsuki V3 se reiniciará en:*
+> \`\`\`3 segundos...\`\`\`
+
+> 🔄 *Reconectando al servidor...*
+> 🌐 *Iniciando servicios...*
+
+> 🎅 *¡Itsuki Nakano V3 volverá en línea pronto!* 🎄`.slice(0, 3500),
+      m
     )
   } catch {}
 
-  // Pequeño delay y salir (el proceso gestor debería relanzar)
+  // Pequeño delay y salir
   setTimeout(() => {
     try { process.exit(0) } catch {}
-  }, 1000)
+  }, 3000)
+}
+
+// Función para enviar mensaje de reconexión (se debe llamar cuando el bot se conecte)
+export async function sendReconnectionMessage(conn) {
+  const restartFile = path.join(ROOT, 'temp', 'restart_info.json')
+  
+  if (fs.existsSync(restartFile)) {
+    try {
+      const info = JSON.parse(fs.readFileSync(restartFile, 'utf8'))
+      
+      // Esperar un poco para asegurar que el bot esté completamente conectado
+      setTimeout(async () => {
+        try {
+          await conn.reply(
+            info.chatId,
+            `> 🎄 *¡BOT EN LÍNEA!* 🎅
+
+> ✅ *Itsuki Nakano V3 reconectado exitosamente*
+
+> 🌐 *Estado del servidor:* Conectado
+> ⚡ *Servicios:* Activos
+> 🎯 *Funciones:* Operativas
+
+> 📊 *Información del sistema:*
+> • Tiempo de reconexión: ${Date.now() - info.timestamp}ms
+> • Estado: ✅ Conectado al servidor
+> • Servicios: 🟢 Todos operativos
+
+> 🎅 *¡Itsuki V3 está listo para ayudarte de nuevo!*
+> 🎄 *¡Feliz Navidad!* 🎁`,
+            null
+          )
+          
+          // Limpiar archivo temporal
+          fs.unlinkSync(restartFile)
+          
+        } catch (error) {
+          console.error('❌ Error enviando mensaje de reconexión:', error)
+        }
+      }, 5000) // Esperar 5 segundos después de la conexión
+      
+    } catch (error) {
+      console.error('❌ Error leyendo información de reinicio:', error)
+    }
+  }
 }
 
 handler.help = ['reiniciar', 'restart']
