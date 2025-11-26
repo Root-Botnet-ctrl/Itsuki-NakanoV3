@@ -1,82 +1,35 @@
-import fetch from 'node-fetch'
+var handler = async (m, { conn, participants, usedPrefix, command }) => {
+let mentionedJid = await m.mentionedJid
+let user = mentionedJid && mentionedJid.length ? mentionedJid[0] : m.quoted && await m.quoted.sender ? await m.quoted.sender : null
+if (!user) return conn.reply(m.chat, `> Debes mencionar o responder a un usuario para expulsarlo.`, m)
 
-async function makeFkontak() {
-  try {
-    const res = await fetch('https://i.postimg.cc/rFfVL8Ps/image.jpg')
-    const thumb2 = Buffer.from(await res.arrayBuffer())
-    return {
-      key: { participants: '0@s.whatsapp.net', remoteJid: 'status@broadcast', fromMe: false, id: 'Halo' },
-      message: { locationMessage: { name: 'Expulsar', jpegThumbnail: thumb2 } },
-      participant: '0@s.whatsapp.net'
-    }
-  } catch {
-    return undefined
-  }
-}
+try {
+const groupInfo = await conn.groupMetadata(m.chat)
+const ownerGroup = groupInfo.owner || m.chat.split`-`[0] + '@s.whatsapp.net'
+const ownerBot = global.owner[0][0] + '@s.whatsapp.net'
 
-let handler = async (m, { conn, text, participants, parseUserTargets, getUserInfo, isAdmin, isBotAdmin }) => {
-  const ctxErr = (global.rcanalx || {})
-  const ctxWarn = (global.rcanalw || {})
-  const ctxOk = (global.rcanalr || {})
+if (user === conn.user.jid) return conn.reply(m.chat, `> No puedo eliminar el bot del grupo.`, m)
+if (user === ownerGroup) return conn.reply(m.chat, `> No puedo eliminar al propietario del grupo.`, m)
+if (user === ownerBot) return conn.reply(m.chat, `> No puedo eliminar al propietario del bot.`, m)
 
-  if (!m.isGroup) return conn.reply(m.chat, '❌ Este comando solo funciona en grupos.', m, ctxErr)
-  if (!isAdmin) return conn.reply(m.chat, '⚠️ Necesitas ser administrador para usar este comando.', m, ctxErr)
-  if (!isBotAdmin) return conn.reply(m.chat, '⚠️ Necesito permisos de administrador para expulsar.', m, ctxErr)
+// Expulsar al usuario
+await conn.groupParticipantsUpdate(m.chat, [user], 'remove')
 
-  if (!m.mentionedJid?.length && !m.quoted && !text?.trim()) {
-    return conn.reply(m.chat, `
-📝 **Uso del comando:**
+// Mensaje rápido mencionando al usuario eliminado
+await conn.sendMessage(m.chat, { 
+text: `> ⛔️ ha sido expulsado del grupo Correctamente ✅️`,
+mentions: [user]
+}, { quoted: m })
 
-• kick @usuario
-• kick (respondiendo a un mensaje)
-• kick 123456789 (número específico)
-    `.trim(), m, ctxWarn)
-  }
-
-  let targets = []
-  try {
-    targets = await parseUserTargets(m, text, participants, conn)
-  } catch {}
-
-  if (Array.isArray(targets) && targets.length > 1) targets = [targets[0]]
-  if (!targets.length) return conn.reply(m.chat, '❌ No pude identificar al usuario.', m, ctxErr)
-
-  const target = targets[0]
-
-  if (target === m.sender) return conn.reply(m.chat, '❌ No puedes expulsarte a ti mismo.', m, ctxErr)
-  if (target === conn.user.jid) return conn.reply(m.chat, '❌ No puedo expulsarme a mí misma.', m, ctxErr)
-
-  const info = await getUserInfo(target, participants, conn)
-  if (!info.exists) return conn.reply(m.chat, '❌ Este usuario ya no está en el grupo.', m, ctxErr)
-  if (info.isAdmin || info.isSuperAdmin) return conn.reply(m.chat, '❌ No puedo expulsar a otro administrador.', m, ctxErr)
-
-  let newName = info.name || target.split('@')[0]
-
-  await conn.reply(m.chat, '*⏳ Expulsando usuario...*', m, ctxWarn)
-
-  try {
-    await conn.groupParticipantsUpdate(m.chat, [target], 'remove')
-    
-    await conn.reply(m.chat, 
-      `✅ *Usuario expulsado*\n\n` +
-      `👤 *Usuario:* ${newName}\n` +
-      `👑 *Expulsado por:* @${m.sender.split('@')[0]}`,
-      m,
-      { mentions: [m.sender, target] }
-    )
-  } catch (e) {
-    return conn.reply(m.chat, 
-      `❌ Error al expulsar: ${e?.message || e}`,
-      m, ctxErr
-    )
-  }
-}
+} catch (e) {
+conn.reply(m.chat, `> ⚠︎ Error al expulsar al usuario.\n> Usa *${usedPrefix}report* para informarlo.\n\n${e.message}`, m)
+}}
 
 handler.help = ['kick']
 handler.tags = ['group']
-handler.command = ['kick', 'ban', 'expulsar']
+handler.command = ['kick', 'echar', 'hechar','sacar', 'ban']
+handler.admin = true
 handler.group = true
-handler.user = true
 handler.botAdmin = true
 
 export default handler
