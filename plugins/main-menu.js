@@ -19,10 +19,11 @@ let handler = async (m, { conn, usedPrefix: _p }) => {
 
     let menuText = `> 👋🏻 .ৎ˚₊‧  Hola, @${m.sender.split('@')[0]} *Pasa Feliz Navidad ❄️*.
 
->  ֹ ִ \`I N F O - B O T\` ! ୧ ֹ    
+>  ִ \`I N F O - B O T\` ! ୧ ֹ 
+   
 > ੭੭﹙❐﹚ \`bot :\` *soy ItsukiV3*
 > ੭੭﹙❐﹚ \`Ping :\` *${speed} ms*
-> ੭੭﹙❐﹚ \`Uptime :\` [ *${await getUptime()}* ]
+> ੭੭﹙❐﹚ \`Uptime :\` *${await getUptime()}*
 > ੭੭﹙❐﹚ \`RAM :\` *${(process.memoryUsage().rss / 1024 / 1024).toFixed(2)}* MB
 > ੭੭﹙❐﹚ \`Plugins :\` *${help.length}*
 > ੭੭﹙❐﹚ \`Owner :\` *@leoDev*
