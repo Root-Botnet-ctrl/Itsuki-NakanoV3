@@ -25,15 +25,20 @@ const handler = async (m, { isOwner, isAdmin, conn, text, participants, args, co
 ╭━━━〔 *📌 USUARIOS ETIQUETADOS 📌* 〕━━━⬣
 `;
 
+  // Crear array de menciones
+  const mentions = [];
+  
   for (const mem of participants) {
-    teks += `┃ > ⓘ \`@${mem.id.split('@')[0]}\`\n`;
+    const userId = mem.id.split('@')[0];
+    teks += `┃ > ⓘ \`@${userId}\`\n`;
+    mentions.push(mem.id); // Agregar el ID completo para la mención
   }
 
   teks += `╰━━━━━━━━━━━━━━━━━━━━━━━━⬣`;
 
   await conn.sendMessage(m.chat, { 
     text: teks, 
-    mentions: participants.map((a) => a.id) 
+    mentions: mentions // Usar el array de menciones
   });
 };
 
