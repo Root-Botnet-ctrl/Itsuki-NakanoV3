@@ -1,26 +1,21 @@
 let handler = async (m, { conn, usedPrefix, command }) => {
-  const ctxErr = global.rcanalx || { contextInfo: { externalAdReply: { title: '❌ Error', body: 'Itsuki Nakano IA', thumbnailUrl: 'https://qu.ax/QGAVS.jpg', sourceUrl: global.canalOficial || '' }}}
-  const ctxWarn = global.rcanalw || { contextInfo: { externalAdReply: { title: '⚠️ Advertencia', body: 'Itsuki Nakano IA', thumbnailUrl: 'https://qu.ax/QGAVS.jpg', sourceUrl: global.canalOficial || '' }}}
-  const ctxOk = global.rcanalr || { contextInfo: { externalAdReply: { title: '✅ Acción', body: 'Itsuki Nakano IA', thumbnailUrl: 'https://qu.ax/QGAVS.jpg', sourceUrl: global.canalOficial || '' }}}
-
   const currency = global.currency || 'Yenes'
 
   if (!db.data.chats[m.chat].economy && m.isGroup) {
-    return conn.reply(m.chat, `🍙📚 *ITSUKI - Sistema de Economía*\n\n❌ Los comandos de economía están desactivados en este grupo\n\n*Administrador*, activa la economía con:\n${usedPrefix}economy on\n\n📖 "No puedo procesar acciones si la economía está desactivada..."`, m, ctxErr)
+    return conn.reply(m.chat, `> ⓘ ECONOMIA DESACTIVADA\n\n❌ Los comandos de economía están desactivados\n\n📝 Administrador activa con:\n${usedPrefix}economy on`, m)
   }
 
   let user = global.db.data.users[m.sender]
   user.lastcrime = user.lastcrime || 0
   user.coin = user.coin || 0
 
-  // Tiempo de espera reducido a 3 minutos
   const cooldown = 3 * 60 * 1000
   const ahora = Date.now()
 
   if (ahora < user.lastcrime) {
     const restante = user.lastcrime - ahora
     const wait = formatTimeMs(restante)
-    return conn.reply(m.chat, `🍙⏰ *ITSUKI - Tiempo de Espera*\n\n⚠️ Debes descansar antes de intentar otra acción\n\n⏱️ *Tiempo restante:* ${wait}\n\n📚 "La paciencia es una virtud... espera un poco más"`, m, ctxWarn)
+    return conn.reply(m.chat, `> ⓘ TIEMPO DE ESPERA\n\n⏰ Debes esperar: ${wait}`, m)
   }
 
   user.lastcrime = ahora + cooldown
@@ -33,13 +28,11 @@ let handler = async (m, { conn, usedPrefix, command }) => {
     user.coin += cantidad
 
     await conn.reply(m.chat, 
-      `🍙✅ *ITSUKI - Acción Exitosa* 📚✨\n\n` +
+      `> ⓘ ACCION EXITOSA\n\n` +
       `${evento.mensaje}\n\n` +
-      `💰 *Ganancia:* +¥${cantidad.toLocaleString()} ${currency}\n` +
-      `🎒 *Dinero en cartera:* ¥${user.coin.toLocaleString()} ${currency}\n\n` +
-      `📖 "¡Acción completada con éxito!"\n` +
-      `🍱 "Recuerda depositar tu dinero en el banco"`,
-      m, ctxOk
+      `💰 Ganancia: +¥${cantidad.toLocaleString()}\n` +
+      `🎒 Cartera: ¥${user.coin.toLocaleString()}`,
+      m
     )
   } else {
     cantidad = Math.floor(Math.random() * 1801) + 3000
@@ -47,13 +40,11 @@ let handler = async (m, { conn, usedPrefix, command }) => {
     if (user.coin < 0) user.coin = 0
 
     await conn.reply(m.chat,
-      `🍙❌ *ITSUKI - Acción Fallida* 📚⚠️\n\n` +
+      `> ⓘ ACCION FALLIDA\n\n` +
       `${evento.mensaje}\n\n` +
-      `💸 *Pérdida:* -¥${cantidad.toLocaleString()} ${currency}\n` +
-      `🎒 *Dinero en cartera:* ¥${user.coin.toLocaleString()} ${currency}\n\n` +
-      `📖 "No todas las acciones salen bien..."\n` +
-      `🍱 "Aprende de tus errores y vuelve a intentarlo"`,
-      m, ctxWarn
+      `💸 Perdida: -¥${cantidad.toLocaleString()}\n` +
+      `🎒 Cartera: ¥${user.coin.toLocaleString()}`,
+      m
     )
   }
 }
