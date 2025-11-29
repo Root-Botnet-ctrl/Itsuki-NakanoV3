@@ -73,7 +73,7 @@ let handler = async (m, { conn }) => {
 
             await saveCharacters(characters)
 
-            await conn.reply(m.chat, `> ⓘ \`Has reclamado a:\` *${character.name}*`, m)
+            await conn.reply(m.chat, `> ⓘ \`Has reclamado a:\` *${character.name}* ✅️`, m)
             await m.react('✅')
 
             cooldowns[userId] = now + 15 * 1000
