@@ -16,6 +16,10 @@ import { loadDatabase, saveDatabase, DB_PATH } from './lib/db.js'
 import { watchFile } from 'fs'
 import { yukiJadiBot } from './plugins/sockets-serbot.js'
 
+// ✅ AGREGAR ESTAS 2 LÍNEAS
+import dotenv from 'dotenv'
+dotenv.config()
+
 const phoneUtil = (libPhoneNumber.PhoneNumberUtil || libPhoneNumber.default?.PhoneNumberUtil).getInstance()
 
 const __filename = fileURLToPath(import.meta.url)
