@@ -1,49 +1,153 @@
-import fetch from 'node-fetch';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
+const { exec } = require('child_process');
+const util = require('util');
+const execAsync = util.promisify(exec);
 
-const handler = async (m, { conn, args, usedPrefix, command }) => {
-    const ctxErr = global.rcanalx || { contextInfo: { externalAdReply: { title: '❌ Error', body: 'Itsuki Nakano IA', thumbnailUrl: 'https://files.catbox.moe/zh5z6m.jpg', sourceUrl: global.canalOficial || '' }}}
-    const ctxWarn = global.rcanalw || { contextInfo: { externalAdReply: { title: '⚠️ Advertencia', body: 'Itsuki Nakano IA', thumbnailUrl: 'https://files.catbox.moe/zh5z6m.jpg', sourceUrl: global.canalOficial || '' }}}
-    const ctxOk = global.rcanalr || { contextInfo: { externalAdReply: { title: '✅ Éxito', body: 'Itsuki Nakano IA', thumbnailUrl: 'https://qu.ax/QGAVS.jpg', sourceUrl: global.canalOficial || '' }}}
-
+let handler = async (m, { conn, text, args, usedPrefix, command }) => {
     try {
-        if (!args[0]) {
+        await m.react('🕒');
+
+        if (!text) {
+            await m.react('❔');
             return conn.reply(m.chat, 
-                `> 🌸 𝙋𝙤𝙧 𝙛𝙖𝙫𝙤𝙧 𝙞𝙣𝙜𝙧𝙚𝙨𝙖 𝙚𝙡 𝙩𝙚𝙭𝙩𝙤 𝙦𝙪𝙚 𝙙𝙚𝙨𝙚𝙖𝙨 𝙘𝙤𝙣𝙫𝙚𝙧𝙩𝙞𝙧 𝙚𝙣 𝙨𝙩𝙞𝙘𝙠𝙚𝙧.\n\n> 𝗘𝗷𝗲𝗺𝗽𝗹𝗼: ${usedPrefix}𝗕𝗿𝗮𝘁 𝗟𝗲𝗼 𝗘𝘀 𝗘𝗹 𝗠𝗲𝗷𝗼𝗿`, 
-                m, ctxWarn);
+                '> `❌ TEXTO FALTANTE`\n\n' +
+                '> `📝 Debes escribir texto después del comando`\n\n' +
+                '> `💡 Ejemplo:` *' + usedPrefix + command + ' texto aquí*', 
+                m
+            );
         }
 
-        const text = encodeURIComponent(args.join(" "));
-        const apiUrl = `https://api.siputzx.my.id/api/m/brat?text=${text}`;
+        const tempDir = './temp';
+        
+        if (!fs.existsSync(tempDir)) {
+            fs.mkdirSync(tempDir, { recursive: true });
+        }
 
-        // Reacción de espera
-        await conn.sendMessage(m.chat, { react: { text: '⏳', key: m.key } });
+        const tempVideoPath = path.join(tempDir, `brat_video_${Date.now()}.mp4`);
+        const tempStickerPath = path.join(tempDir, `brat_sticker_${Date.now()}.webp`);
 
-        // Obtener el sticker
-        const stickerResponse = await fetch(apiUrl);
-        if (!stickerResponse.ok) throw new Error('error al generar el sticker');
+        const mayApiUrl = `https://mayapi.ooguy.com/bratvideo`;
 
-        // Enviar el sticker de forma limpia
+        let mediaData;
+
+        const apiResponse = await axios({
+            method: 'GET',
+            url: mayApiUrl,
+            params: {
+                apikey: 'may-051b5d3d',
+                text: text
+            },
+            timeout: 15000,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Accept': 'application/json, */*'
+            }
+        });
+
+        if (!apiResponse.data || typeof apiResponse.data !== 'object' || !apiResponse.data.status) {
+            throw new Error('Error en la API');
+        }
+
+        let videoUrl;
+        if (typeof apiResponse.data.result === 'string') {
+            videoUrl = apiResponse.data.result;
+        } else if (apiResponse.data.result && apiResponse.data.result.url) {
+            videoUrl = apiResponse.data.result.url;
+        } else if (apiResponse.data.url) {
+            videoUrl = apiResponse.data.url;
+        } else {
+            throw new Error('No se encontró URL de video');
+        }
+
+        const videoResponse = await axios({
+            method: 'GET',
+            url: videoUrl,
+            responseType: 'arraybuffer',
+            timeout: 20000,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Accept': '*/*'
+            }
+        });
+
+        mediaData = Buffer.from(videoResponse.data);
+
+        if (!mediaData || mediaData.length < 100) {
+            throw new Error('Datos insuficientes');
+        }
+
+        fs.writeFileSync(tempVideoPath, mediaData);
+
+        try {
+            const ffmpegCommand = `ffmpeg -i "${tempVideoPath}" -vcodec libwebp -filter:v fps=fps=20 -lossless 0 -compression_level 3 -qscale 50 -loop 0 -preset default -an -vsync 0 -s 512:512 "${tempStickerPath}" -y`;
+            await execAsync(ffmpegCommand, { timeout: 30000 });
+        } catch (conversionError) {
+            await conn.sendMessage(m.chat, {
+                video: mediaData
+            }, { quoted: m });
+            
+            setTimeout(() => {
+                try {
+                    if (fs.existsSync(tempVideoPath)) fs.unlinkSync(tempVideoPath);
+                } catch (e) {}
+            }, 30000);
+            
+            return;
+        }
+
+        if (!fs.existsSync(tempStickerPath)) {
+            throw new Error('No se pudo crear el sticker');
+        }
+
+        await m.react('✅️');
+
+        const stickerBuffer = fs.readFileSync(tempStickerPath);
         await conn.sendMessage(m.chat, {
-            sticker: { url: apiUrl },
-            packname: 'ᴍʏ ʀᴜʙʏ 💗',
-            author: 'ᴘʀᴇᴍ'
+            sticker: stickerBuffer
         }, { quoted: m });
 
-        // Reacción de éxito
-        await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } });
+        setTimeout(() => {
+            try {
+                if (fs.existsSync(tempVideoPath)) fs.unlinkSync(tempVideoPath);
+                if (fs.existsSync(tempStickerPath)) fs.unlinkSync(tempStickerPath);
+            } catch (e) {}
+        }, 30000);
 
-    } catch (err) {
-        console.error(err);
-        // Reacción de error
-        await conn.sendMessage(m.chat, { react: { text: '❌', key: m.key } });
-        await conn.reply(m.chat, 
-            `> 𝙊𝙘𝙪𝙧𝙧𝙞ó 𝙪𝙣 𝙚𝙧𝙧𝙤𝙧 𝙖𝙡 𝙜𝙚𝙣𝙚𝙧𝙖𝙧 𝙚𝙡 𝙨𝙩𝙞𝙘𝙠𝙚𝙧.\n\n𝙋𝙤𝙧 𝙛𝙖𝙫𝙤𝙧 𝙞𝙣𝙩𝙚𝙣𝙩𝙖 𝙙𝙚 𝙣𝙪𝙚𝙫𝙤.`, 
-            m, ctxErr);
+    } catch (error) {
+        try {
+            if (fs.existsSync(tempVideoPath)) fs.unlinkSync(tempVideoPath);
+            if (fs.existsSync(tempStickerPath)) fs.unlinkSync(tempStickerPath);
+        } catch (cleanError) {}
+        
+        await m.react('❌');
+        
+        let errorMessage = '> `❌ ERROR ENCONTRADO`\n\n';
+        
+        if (error.message.includes('insuficientes') || error.message.includes('vacío')) {
+            errorMessage += '> `📝 El servicio devolvió un archivo vacío o corrupto.`';
+        } else if (error.code === 'ECONNABORTED') {
+            errorMessage += '> `⏰ Tiempo de espera agotado. Intenta de nuevo.`';
+        } else if (error.response) {
+            errorMessage += '> `📝 Error en la API: ' + error.response.status + '`';
+        } else if (error.request) {
+            errorMessage += '> `📝 No se pudo conectar con el servicio.`';
+        } else if (error.message.includes('ffmpeg')) {
+            errorMessage += '> `📝 Error al procesar el video.`';
+        } else {
+            errorMessage += '> `📝 ' + error.message + '`';
+        }
+
+        await conn.reply(m.chat, errorMessage, m);
     }
 };
 
-handler.help = ['brat <texto>'];
+handler.help = ['brat'];
 handler.tags = ['sticker'];
-handler.command = /^brat(icker)?$/i;
+handler.command = ['brat'];
+handler.group = true;
 
 export default handler;
