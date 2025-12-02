@@ -552,7 +552,7 @@ export async function sendWelcomeOrBye(conn, { jid, userName = 'Usuario', type =
         productImageCount: 1
       },
       businessOwnerJid: who || '0@s.whatsapp.net',
-      caption: `*👤ᴜsᴜᴀʀɪᴏ*: ${taguser}\n*📚 ɢʀᴜᴘᴏ*: ${groupSubject}\n*👥️ ᴍɪᴇᴍʙʀᴏs*: ${totalMembers}\n*📆 ғᴇᴄʜᴀ*: ${date}`.trim(),
+      caption: `*❄️ ғᴇʟɪᴢ ɴᴀᴠɪᴅᴀᴅ ʙʙʏ*\n*📚 ɢʀᴜᴘᴏ*: ${groupSubject}\n*👥️ ᴍɪᴇᴍʙʀᴏs*: ${totalMembers}\n*📆 ғᴇᴄʜᴀ*: ${date}`.trim(),
       title: '',
       subtitle: '',
       footer: groupSubject || '',
