@@ -10,9 +10,6 @@ import { createCanvas, loadImage } from '@napi-rs/canvas'
 import { jidNormalizedUser } from '@whiskeysockets/baileys'
 import os from 'os'
 
-// =============================================
-//  SISTEMA GLOBAL FILENAME SIMPLIFICADO
-// =============================================
 if (typeof global.__filename !== 'function') {
   global.__filename = function(url, relative = false) {
     try {
@@ -37,9 +34,6 @@ if (typeof global.__dirname !== 'function') {
   };
 }
 
-// =============================================
-// DIRECTORIO ACTUAL PARA USO INTERNO
-// =============================================
 const CURRENT_DIR = path.dirname(fileURLToPath(import.meta.url));
 
 const { proto } = (await import("@whiskeysockets/baileys")).default
@@ -49,11 +43,6 @@ clearTimeout(this)
 resolve()
 }, ms))
 
-// =============================================
-// SISTEMA ANTI-ÁRABE MEJORADO
-// =============================================
-
-// Configuración de países árabes
 const paisesArabes = {
     'arabia': {
         codigos: ['+966', '966'],
@@ -183,10 +172,9 @@ const paisesArabes = {
     }
 }
 
-// Función para detectar si un número es árabe
 function detectarNumeroArabe(numero) {
     const numStr = numero.toString().replace(/\D/g, '')
-    
+
     for (const [paisId, info] of Object.entries(paisesArabes)) {
         for (const codigo of info.codigos) {
             const codigoLimpio = codigo.replace('+', '')
@@ -201,11 +189,10 @@ function detectarNumeroArabe(numero) {
             }
         }
     }
-    
+
     return { esArabe: false }
 }
 
-// Función para verificar si un usuario es admin (optimizada)
 async function isUserAdmin(conn, groupJid, userJid) {
     try {
         const metadata = await conn.groupMetadata(groupJid)
@@ -216,35 +203,29 @@ async function isUserAdmin(conn, groupJid, userJid) {
     }
 }
 
-// Sistema Anti-Árabe en tiempo real
 async function verificarAntiArabe(conn, m) {
     if (!m || !m.isGroup) return false
-    
+
     try {
         const chat = global.db.data.chats?.[m.chat]
         if (!chat || !chat.antiArabe) return false
-        
+
         const sender = m.sender
         const userNumber = sender.split('@')[0]
-        
-        // Verificar si es administrador
+
         const isAdmin = await isUserAdmin(conn, m.chat, sender)
-        if (isAdmin) return false // Los admins no son expulsados
-        
-        // Detectar si el número es árabe
+        if (isAdmin) return false
+
         const deteccion = detectarNumeroArabe(userNumber)
-        
+
         if (deteccion.esArabe) {
-            // Verificar si el usuario ya está en el grupo
             const groupMetadata = await conn.groupMetadata(m.chat).catch(() => null)
             const userInGroup = groupMetadata?.participants?.some(p => p.id === sender)
-            
+
             if (!userInGroup) return false
-            
-            // Expulsar al usuario
+
             await conn.groupParticipantsUpdate(m.chat, [sender], 'remove')
-            
-            // Registrar la expulsión
+
             if (!chat.antiArabeRegistros) chat.antiArabeRegistros = []
             chat.antiArabeRegistros.push({
                 usuario: sender,
@@ -253,13 +234,11 @@ async function verificarAntiArabe(conn, m) {
                 fecha: new Date().toISOString(),
                 motivo: 'anti-arabe'
             })
-            
-            // Limitar el tamaño del historial
+
             if (chat.antiArabeRegistros.length > 100) {
                 chat.antiArabeRegistros = chat.antiArabeRegistros.slice(-100)
             }
-            
-            // Enviar mensaje de expulsión
+
             const mensajeExpulsion = `╭─「 🚫 *ANTI-ÁRABE ACTIVADO* 🚫 」
 │ 
 │ ⚠️ *Usuario Árabe Expulsado*
@@ -278,26 +257,21 @@ async function verificarAntiArabe(conn, m) {
 │ ℹ️ *Para desactivar este sistema:*
 │ └ Use el comando: *.antiarabe off*
 ╰─◉`
-            
+
             await conn.sendMessage(m.chat, { 
                 text: mensajeExpulsion,
                 mentions: [sender]
             })
-            
+
             return true
         }
     } catch (error) {
         console.error('Error en anti-árabe:', error)
     }
-    
+
     return false
 }
 
-// =============================================
-// SISTEMA DE BIENVENIDA/DESPEDIDA INTEGRADO
-// =============================================
-
-// Función para cargar imagen inteligentemente
 async function loadImageSmart(src) {
   if (!src) return null
   try {
@@ -311,7 +285,6 @@ async function loadImageSmart(src) {
   } catch { return null }
 }
 
-// Sistema de estado para welcome - MEJORADO
 const WELCOME_STATE_FILE = path.join(process.cwd(), 'temp/welcome_state.json')
 
 function loadWelcomeState() {
@@ -337,13 +310,11 @@ function saveWelcomeState(state) {
   }
 }
 
-// Función para verificar si el welcome está activado
 export function isWelcomeEnabled(jid) {
   const state = loadWelcomeState()
   return state[jid] !== false
 }
 
-// Función para cambiar el estado del welcome
 export function setWelcomeState(jid, enabled) {
   const state = loadWelcomeState()
   state[jid] = enabled
@@ -351,7 +322,6 @@ export function setWelcomeState(jid, enabled) {
   return enabled
 }
 
-// Función para generar tarjetas de bienvenida/despedida
 export async function makeCard({ title = 'Bienvenida', subtitle = '', avatarUrl = '', bgUrl = '', badgeUrl = '' }) {
   const width = 900, height = 380
   const canvas = createCanvas(width, height)
@@ -435,7 +405,6 @@ export async function makeCard({ title = 'Bienvenida', subtitle = '', avatarUrl 
   return canvas.toBuffer('image/png')
 }
 
-// Función principal para enviar bienvenidas/despedidas
 export async function sendWelcomeOrBye(conn, { jid, userName = 'Usuario', type = 'welcome', groupName = '', participant }) {
   if (!isWelcomeEnabled(jid)) {
     return null
@@ -616,10 +585,6 @@ export async function sendWelcomeOrBye(conn, { jid, userName = 'Usuario', type =
   }
 }
 
-// =============================================
-// SISTEMA MULTI-PREFIJO SIMPLIFICADO
-// =============================================
-
 const globalPrefixes = [
   '.', ',', '!', '#', '$', '%', '&', '*',
   '-', '_', '+', '=', '|', '\\', '/', '~',
@@ -675,10 +640,6 @@ const normalizeNumber = (num) => {
   return num.replace(/[^0-9]/g, "")
 }
 
-// =============================================
-// HANDLER PRINCIPAL
-// =============================================
-
 export async function handler(chatUpdate) {
   this.msgqueque = this.msgqueque || []
   this.uptime = this.uptime || Date.now()
@@ -706,14 +667,12 @@ export async function handler(chatUpdate) {
       const user = global.db.data.users[m.sender]
       if (typeof user !== "object") global.db.data.users[m.sender] = {}
       if (user) {
-        // SISTEMA DE REGISTRO - INICIO
         if (!("registered" in user)) user.registered = false
         if (!user.registered) {
           if (!("name" in user)) user.name = m.name
           if (!isNumber(user.age)) user.age = -1
           if (!isNumber(user.regTime)) user.regTime = -1
         }
-        // SISTEMA DE REGISTRO - FIN
 
         if (!("exp" in user) || !isNumber(user.exp)) user.exp = 0
         if (!("coin" in user) || !isNumber(user.coin)) user.coin = 0
@@ -770,7 +729,6 @@ export async function handler(chatUpdate) {
         if (!("primaryBot" in chat)) chat.primaryBot = null
         if (!("modoadmin" in chat)) chat.modoadmin = false
         if (!("antiLink" in chat)) chat.antiLink = true
-        // AÑADIR ANTI-ÁRABE AL CHAT
         if (!("antiArabe" in chat)) chat.antiArabe = false
         if (!("antiArabeRegistros" in chat)) chat.antiArabeRegistros = []
         if (!("nsfw" in chat)) chat.nsfw = false
@@ -820,15 +778,11 @@ export async function handler(chatUpdate) {
     const chat = global.db.data.chats[m.chat]
     const settings = global.db.data.settings[this.user.jid]  
 
-    // =============================================
-    // SISTEMA ANTI-ÁRABE EN TIEMPO REAL
-    // =============================================
     if (m.message && m.key.remoteJid.endsWith('@g.us') && m.text && chat?.antiArabe) {
       try {
-        // Verificar anti-árabe antes de procesar comandos
         const fueExpulsado = await verificarAntiArabe(this, m)
         if (fueExpulsado) {
-          return // Detener el procesamiento si fue expulsado
+          return
         }
       } catch (error) {
         console.error('Error en sistema anti-árabe:', error)
@@ -1132,81 +1086,80 @@ export async function handler(chatUpdate) {
   }
 }
 
-// =============================================
-// SISTEMA DE BIENVENIDA/DESPEDIDA AUTOMÁTICO
-// =============================================
-
 let welcomeProcessing = new Set();
 
-global.conn.ev.on('group-participants.update', async (update) => {
-  try {
-    const { id, participants, action } = update;
-    const chat = global.db.data.chats?.[id];
+let welcomeEventListener = null;
 
-    // Verificar si welcome está activado en la BD
-    if (!chat || !chat.welcome) return;
+function initWelcomeSystem() {
+  if (!global.conn) {
+    console.error('❌ global.conn no está definido. No se puede inicializar sistema welcome.');
+    return;
+  }
+  
+  if (welcomeEventListener) {
+    global.conn.ev.off('group-participants.update', welcomeEventListener);
+  }
+  
+  welcomeEventListener = async (update) => {
+    try {
+      const { id, participants, action } = update;
+      const chat = global.db.data.chats?.[id];
 
-    // Crear clave única para este evento
-    const eventKey = `${id}_${action}_${participants.join('_')}`;
+      if (!chat || !chat.welcome) return;
 
-    // Evitar duplicados
-    if (welcomeProcessing.has(eventKey)) {
-      return;
-    }
+      const eventKey = `${id}_${action}_${participants.join('_')}`;
 
-    welcomeProcessing.add(eventKey);
-    setTimeout(() => {
-      welcomeProcessing.delete(eventKey);
-    }, 10000);
+      if (welcomeProcessing.has(eventKey)) {
+        return;
+      }
 
-    // Procesar cada participante
-    for (const participant of participants) {
-      try {
-        const userKey = `${id}_${action}_${participant}`;
-        const cacheKey = `welcome_${userKey}`;
+      welcomeProcessing.add(eventKey);
+      setTimeout(() => {
+        welcomeProcessing.delete(eventKey);
+      }, 10000);
 
-        if (!global.welcomeCache) {
-          global.welcomeCache = new Set();
-        }
-        
-        if (global.welcomeCache.has(cacheKey)) {
-          continue;
-        }
-        
-        global.welcomeCache.add(cacheKey);
-        setTimeout(() => {
-          if (global.welcomeCache) {
-            global.welcomeCache.delete(cacheKey);
+      for (const participant of participants) {
+        try {
+          const userKey = `${id}_${action}_${participant}`;
+          const cacheKey = `welcome_${userKey}`;
+
+          if (!global.welcomeCache) {
+            global.welcomeCache = new Set();
           }
-        }, 30000);
 
-        // =============================================
-        // INTEGRAR ANTI-ÁRABE EN WELCOME
-        // =============================================
-        if (action === 'add' && chat.antiArabe) {
-          const userNumber = participant.split('@')[0];
-          const deteccion = detectarNumeroArabe(userNumber);
-          
-          if (deteccion.esArabe) {
-            console.log(`🚫 Anti-árabe expulsando: ${userNumber} (${deteccion.nombre})`);
-            
-            // Verificar si es admin antes de expulsar
-            const isAdmin = await isUserAdmin(global.conn, id, participant);
-            if (!isAdmin) {
-              await global.conn.groupParticipantsUpdate(id, [participant], 'remove');
-              
-              // Registrar expulsión
-              if (!chat.antiArabeRegistros) chat.antiArabeRegistros = [];
-              chat.antiArabeRegistros.push({
-                usuario: participant,
-                numero: userNumber,
-                pais: deteccion.nombre,
-                fecha: new Date().toISOString(),
-                motivo: 'anti-arabe-welcome'
-              });
-              
-              await global.conn.sendMessage(id, {
-                text: `╭─「 🚫 *ANTI-ÁRABE ACTIVADO* 🚫 」
+          if (global.welcomeCache.has(cacheKey)) {
+            continue;
+          }
+
+          global.welcomeCache.add(cacheKey);
+          setTimeout(() => {
+            if (global.welcomeCache) {
+              global.welcomeCache.delete(cacheKey);
+            }
+          }, 30000);
+
+          if (action === 'add' && chat.antiArabe) {
+            const userNumber = participant.split('@')[0];
+            const deteccion = detectarNumeroArabe(userNumber);
+
+            if (deteccion.esArabe) {
+              console.log(`🚫 Anti-árabe expulsando: ${userNumber} (${deteccion.nombre})`);
+
+              const isAdmin = await isUserAdmin(global.conn, id, participant);
+              if (!isAdmin) {
+                await global.conn.groupParticipantsUpdate(id, [participant], 'remove');
+
+                if (!chat.antiArabeRegistros) chat.antiArabeRegistros = [];
+                chat.antiArabeRegistros.push({
+                  usuario: participant,
+                  numero: userNumber,
+                  pais: deteccion.nombre,
+                  fecha: new Date().toISOString(),
+                  motivo: 'anti-arabe-welcome'
+                });
+
+                await global.conn.sendMessage(id, {
+                  text: `╭─「 🚫 *ANTI-ÁRABE ACTIVADO* 🚫 」
 │ 
 │ ⚠️ *Usuario Árabe Expulsado al Entrar*
 │ 
@@ -1220,40 +1173,43 @@ global.conn.ev.on('group-participants.update', async (update) => {
 │ ├ Anti-Árabe: ✅ ACTIVADO
 │ └ Bloqueo: Entrada + Mensajes
 ╰─◉`.trim()
-              });
-              continue; // No enviar welcome si fue expulsado
+                });
+                continue;
+              }
             }
           }
-        }
 
-        // Si pasó el anti-árabe, enviar welcome normal
-        if (action === 'add') {
-          await sendWelcomeOrBye(global.conn, {
-            jid: id,
-            participant,
-            type: 'welcome'
-          });
-        } else if (action === 'remove') {
-          await sendWelcomeOrBye(global.conn, {
-            jid: id,
-            participant,
-            type: 'bye'
-          });
-        }
+          if (action === 'add') {
+            await sendWelcomeOrBye(global.conn, {
+              jid: id,
+              participant,
+              type: 'welcome'
+            });
+          } else if (action === 'remove') {
+            await sendWelcomeOrBye(global.conn, {
+              jid: id,
+              participant,
+              type: 'bye'
+            });
+          }
 
-      } catch (error) {
-        console.error(`Error procesando ${action} para ${participant}:`, error);
+        } catch (error) {
+          console.error(`Error procesando ${action} para ${participant}:`, error);
+        }
       }
+
+    } catch (error) {
+      console.error('❌ Error en sistema welcome:', error);
     }
+  };
+  
+  global.conn.ev.on('group-participants.update', welcomeEventListener);
+  console.log('✅ Sistema welcome inicializado correctamente');
+}
 
-  } catch (error) {
-    console.error('❌ Error en sistema welcome:', error);
-  }
-});
-
-// =============================================
-// FUNCIÓN DFALL MEJORADA
-// =============================================
+setTimeout(() => {
+  initWelcomeSystem();
+}, 5000);
 
 global.dfail = (type, m, conn) => {
   let edadaleatoria = ['10', '28', '20', '40', '18', '21', '15', '11', '9', '17', '25'][Math.floor(Math.random() * 11)]
@@ -1276,10 +1232,6 @@ global.dfail = (type, m, conn) => {
   if (msg) return conn.reply(m.chat, msg, m).then(_ => m.react('✖️'))
 }
 
-// =============================================
-// HACER FUNCIONES GLOBALES PARA PLUGINS
-// =============================================
-
 global.sendWelcomeOrBye = sendWelcomeOrBye
 global.isWelcomeEnabled = isWelcomeEnabled
 global.setWelcomeState = setWelcomeState
@@ -1288,10 +1240,8 @@ global.detectarNumeroArabe = detectarNumeroArabe
 global.verificarAntiArabe = verificarAntiArabe
 global.isUserAdmin = isUserAdmin
 global.paisesArabes = paisesArabes
+global.initWelcomeSystem = initWelcomeSystem
 
-// =============================================
-// WATCHFILE CORREGIDO
-// =============================================
 let file = global.__filename(import.meta.url, true)
 if (typeof file === 'function') {
   file = CURRENT_DIR;
@@ -1301,10 +1251,6 @@ watchFile(file, async () => {
   console.log(chalk.magenta("Se actualizó 'handler.js'"))
   if (global.reloadHandler) console.log(await global.reloadHandler())
 })
-
-// =============================================
-// EXPORTACIONES
-// =============================================
 
 export default { 
   handler, 
@@ -1316,5 +1262,6 @@ export default {
   saveWelcomeState,
   detectarNumeroArabe,
   verificarAntiArabe,
-  isUserAdmin
+  isUserAdmin,
+  initWelcomeSystem
 }
