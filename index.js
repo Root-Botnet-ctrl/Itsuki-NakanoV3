@@ -57,7 +57,7 @@ say('ItsukiNakanoV3', {
   transitionGradient: true
 });
 
-say('BOT MULTI-DEVICE', {
+say('ɴᴇᴡ ᴜᴘᴅᴀᴛᴇ ❄️', {
   font: 'block',
   align: 'center',
   colors: ['#FF69B4'],
