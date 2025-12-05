@@ -36,6 +36,5 @@ handler.help = ['$']
 handler.tags = ['owner']
 handler.customPrefix = /^[$] /
 handler.command = new RegExp
-handler.rowner = true
 
 export default handler
