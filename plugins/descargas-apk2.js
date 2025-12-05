@@ -30,14 +30,41 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
 
     let data5 = await download(searchA[0].id)
 
-    let txt = `> ⓘ INFORMACION APK
+    // Primero enviar solo la imagen/portada del APK
+    let txtPortada = `> 🎴 𝐏𝐎𝐑𝐓𝐀𝐃𝐀 𝐃𝐄𝐋 𝐀𝐏𝐊
 
-> 📱 ${data5.name}
-> 📦 ${data5.package}
-> 📅 ${data5.lastup}
-> 💾 ${data5.size}`
+> 📱 *Nombre:* ${data5.name}
+> 📦 *Paquete:* ${data5.package}
+> ⭐ *Puntuación:* ${data5.rating || 'N/A'}
+> 📅 *Última actualización:* ${data5.lastup}
+> 💾 *Tamaño:* ${data5.size}
+> 📥 *Descargas:* ${data5.downloads || 'N/A'}
+    
+> 💡 *La imagen muestra el icono oficial de la aplicación*`
 
-    await conn.sendFile(m.chat, data5.icon, 'thumbnail.jpg', txt, m)
+    // Enviar primero la imagen de portada
+    await conn.sendFile(m.chat, data5.icon, 'portada-apk.jpg', txtPortada, m)
+    
+    // Esperar un momento antes de enviar la info adicional
+    await new Promise(resolve => setTimeout(resolve, 1000))
+
+    // Enviar información adicional del APK
+    let txtInfo = `> ⓘ 𝐈𝐍𝐅𝐎𝐑𝐌𝐀𝐂𝐈Ó𝐍 𝐃𝐄𝐓𝐀𝐋𝐋𝐀𝐃𝐀
+
+> 📱 *Aplicación:* ${data5.name}
+> 📦 *ID del paquete:* ${data5.package}
+> 🏷️ *Versión:* ${data5.version || 'N/A'}
+> 📅 *Actualización:* ${data5.lastup}
+> 💾 *Tamaño del APK:* ${data5.size}
+> ⭐ *Puntuación:* ${data5.rating || 'N/A'}
+> 👥 *Descargas:* ${data5.downloads || 'N/A'}
+    
+> 🔍 *Descripción:*
+${data5.description ? (data5.description.substring(0, 300) + (data5.description.length > 300 ? '...' : '')) : 'Sin descripción disponible'}
+
+> 📥 *Espera mientras se prepara la descarga del APK...* 🕑`
+
+    await conn.reply(m.chat, txtInfo, m)
 
     if (data5.size.includes('GB') || parseFloat(data5.size.replace(' MB', '')) > 999) {
       await conn.sendMessage(m.chat, { react: { text: '❌', key: m.key } })
@@ -49,6 +76,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
 > 💡 Busca una versión más ligera`, m)
     }
 
+    // Preparar miniatura para el documento
     let thumbnail = null
     try {
       const img = await Jimp.read(data5.icon)
@@ -58,17 +86,24 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
       console.log('Error al crear miniatura:', err)
     }
 
+    // Enviar el documento APK
     await conn.sendMessage(
       m.chat,
       {
         document: { url: data5.dllink },
         mimetype: 'application/vnd.android.package-archive',
         fileName: `${data5.name}.apk`,
-        caption: `> ⓘ APK DESCARGADA
+        caption: `> ✅ 𝐀𝐏𝐊 𝐃𝐄𝐒𝐂𝐀𝐑𝐆𝐀𝐃𝐀
 
-> 📱 ${data5.name}
-> 📦 ${data5.package}
-> 💾 ${data5.size}`,
+> 📱 *Aplicación:* ${data5.name}
+> 📦 *Paquete:* ${data5.package}
+> 🏷️ *Versión:* ${data5.version || 'N/A'}
+> 💾 *Tamaño:* ${data5.size}
+    
+> 🔐 *Recuerda:* 
+> • Verificar permisos antes de instalar
+> • Descargar solo aplicaciones confiables
+> • Escanear con antivirus si es necesario`,
         ...(thumbnail ? { jpegThumbnail: thumbnail } : {})
       },
       { quoted: m }
