@@ -466,28 +466,6 @@ if (chat?.adminmode && !isAdmin && !isROwner) {
 const isBotAdmin = botGroup?.admin || false
 
 const ___dirname = path.join(path.dirname(fileURLToPath(import.meta.url)), "./plugins")
-
-// --- CAMBIO CLAVE: EJECUTAR 'before' ANTES QUE NADA ---
-for (const name in global.plugins) {
-    const plugin = global.plugins[name];
-    if (plugin && typeof plugin.before === "function") {
-        try {
-            await plugin.before.call(this, m, {
-                conn: this,
-                participants,
-                groupMetadata,
-                user: global.db.data.users[m.sender],
-                chat: global.db.data.chats[m.chat],
-                settings: global.db.data.settings[this.user.jid]
-            });
-        } catch (err) {
-            console.error(`[PLUGIN BEFORE] Error en el plugin ${name}:`, err);
-        }
-    }
-}
-// --- FIN DEL CAMBIO CLAVE ---
-
-
 for (const name in global.plugins) {
 const plugin = global.plugins[name]
 if (!plugin) continue
