@@ -185,5 +185,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
   start()
 }
 
+handler.help = ['code']
+handler.tags = ['serbot']
 handler.command = ['code']
 export default handler
