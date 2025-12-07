@@ -70,6 +70,7 @@ mentionedJid: conn.parseMention(cap),
 handler.help = ['botlist']
 handler.tags = ['serbot']
 handler.command = ['bots'] 
+handler.rowner = true
 
 export default handler
 
