@@ -4,6 +4,32 @@ const { DisconnectReason, generateWAMessageFromContent, proto, prepareWAMessageM
 import fs from "fs/promises"
 import path from 'path'
 
+// Quoted especial con mini-thumbnail
+async function makeFkontak() {
+  try {
+    const { default: fetch } = await import('node-fetch')
+    const res = await fetch('https://cdn.russellxz.click/a1d42213.jpg')
+    const thumb2 = Buffer.from(await res.arrayBuffer())
+    return {
+      key: { 
+        participants: '0@s.whatsapp.net', 
+        remoteJid: 'status@broadcast', 
+        fromMe: false, 
+        id: 'Halo' 
+      },
+      message: { 
+        locationMessage: { 
+          name: '🌷 𝗟𝗶𝘀𝘁𝗮 𝗱𝗲 𝗦𝘂𝗯𝗯𝗼𝘁𝘀 𝗔𝗰𝘁𝗶𝘃𝗼𝘀', 
+          jpegThumbnail: thumb2 
+        } 
+      },
+      participant: '0@s.whatsapp.net'
+    }
+  } catch {
+    return undefined
+  }
+}
+
 let handler = async(m, { usedPrefix, conn, text }) => {
 const limit = 20
 // --- VERSIÓN ORIGINAL ---
@@ -97,6 +123,9 @@ if (totalUsers > limit) {
 // Obtener menciones para los tags
 const mentions = users.map(v => v.user.jid)
 
+// Obtener el quoted especial
+const fkontak = await makeFkontak()
+
 // Crear botón del canal oficial
 const nativeButtons = [
   {
@@ -109,8 +138,8 @@ const nativeButtons = [
 ]
 
 try {
-  // Imagen del thumbnail
-  const imageUrl = ""
+  // Usar la imagen del fkontak como imagen principal
+  const imageUrl = "https://cdn.russellxz.click/a1d42213.jpg"
   const media = await prepareWAMessageMedia({ image: { url: imageUrl } }, { upload: conn.waUploadToServer })
   
   const header = proto.Message.InteractiveMessage.Header.fromObject({
@@ -127,7 +156,10 @@ try {
     })
   })
 
-  const msg = generateWAMessageFromContent(m.chat, { interactiveMessage }, { userJid: conn.user.jid, quoted: m })
+  const msg = generateWAMessageFromContent(m.chat, { interactiveMessage }, { 
+    userJid: conn.user.jid, 
+    quoted: fkontak // Usar el quoted especial
+  })
   await conn.relayMessage(m.chat, msg.message, { messageId: msg.key.id })
 
 } catch (e) {
@@ -143,11 +175,11 @@ try {
         mediaType: 1,
         previewType: 0,
         renderLargerThumbnail: true,
-        thumbnail: await (await fetch("https://cdn.russellxz.click/69ae53cb.jpg")).buffer(),
+        thumbnail: await (await fetch("https://cdn.russellxz.click/a1d42213.jpg")).buffer(),
         sourceUrl: ''
       }
     }
-  }, { quoted: m })
+  }, { quoted: fkontak || m })
 }
 }
 
