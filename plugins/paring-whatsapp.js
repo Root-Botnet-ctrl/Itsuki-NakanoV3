@@ -1,5 +1,5 @@
 import pkg from '@whiskeysockets/baileys'
-const { useMultiFileAuthState, fetchLatestBaileysVersion, Browsers, DisconnectReason, generateWAMessageFromContent, proto } = pkg
+const { useMultiFileAuthState, fetchLatestBaileysVersion, Browsers, DisconnectReason, generateWAMessageFromContent, proto, prepareWAMessageMedia } = pkg
 import pino from "pino";
 import { protoType, serialize, makeWASocket } from '../lib/simple.js'
 import path from 'path'
@@ -8,21 +8,18 @@ import fs from 'fs'
 if (!global.subbots) global.subbots = []
 
 let handler = async (m, { conn, args, usedPrefix, command }) => {
-  const ctxErr = global.rcanalx || {}
-  const ctxOk = global.rcanalr || {}
-
   let userName = args[0] ? args[0] : m.sender.split("@")[0]
   const folder = path.join('Sessions/SubBot', userName)
 
   if (global.subbots.length >= 10) {
     await conn.sendMessage(m.chat, { react: { text: '❌', key: m.key } })
-    return conn.reply(m.chat, 'Se ha alcanzado el maximo de subbots permitidos.', m, ctxErr)
+    return conn.reply(m.chat, 'Se ha alcanzado el maximo de subbots permitidos.', m)
   }
 
   const existing = global.subbots.find(c => c.id === userName && c.connection === 'open')
   if (existing) {
     await conn.sendMessage(m.chat, { react: { text: '⚠️', key: m.key } })
-    return conn.reply(m.chat, 'Este subbot ya esta conectado.', m, ctxErr)
+    return conn.reply(m.chat, 'Este subbot ya esta conectado.', m)
   }
 
   if (!fs.existsSync(folder)) fs.mkdirSync(folder, { recursive: true })
@@ -86,7 +83,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
           global.subbots.push(sock)
 
           await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
-          await conn.reply(m.chat, 'Subbot conectado exitosamente', m, ctxOk)
+          await conn.reply(m.chat, 'Subbot conectado exitosamente', m)
         }
 
         if (connection === 'close') {
@@ -95,7 +92,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
           const reason = lastDisconnect?.error?.output?.statusCode || 0
 
           await conn.sendMessage(m.chat, { react: { text: '⚠️', key: m.key } })
-          await conn.reply(m.chat, `Conexion cerrada. Razon: ${reason}`, m, ctxErr)
+          await conn.reply(m.chat, `Conexion cerrada. Razon: ${reason}`, m)
 
           if (reason !== DisconnectReason.loggedOut) {
             setTimeout(() => {
@@ -127,58 +124,53 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
             // Emoji cuando se genera el código
             await conn.sendMessage(m.chat, { react: { text: '✅️', key: m.key } })
 
-            // Crear mensaje interactivo usando la estructura correcta
-            const msg = generateWAMessageFromContent(m.chat, {
-              viewOnceMessage: {
-                message: {
-                  interactiveMessage: proto.Message.InteractiveMessage.create({
-                    header: proto.Message.InteractiveMessage.Header.create({
-                      hasMediaAttachment: true,
-                      imageMessage: proto.Message.ImageMessage.create({
-                        url: "https://cdn.russellxz.click/73109d7e.jpg",
-                        mimetype: "image/jpeg",
-                        fileSha256: Buffer.from([]),
-                        fileLength: 999999,
-                        height: 1080,
-                        width: 1080,
-                        mediaKey: Buffer.from([]),
-                        fileEncSha256: Buffer.from([]),
-                        directPath: "",
-                        mediaKeyTimestamp: Date.now(),
-                        jpegThumbnail: Buffer.from([])
-                      })
-                    }),
-                    body: proto.Message.InteractiveMessage.Body.create({
-                      text: `🔐 *CÓDIGO DE VINCULACIÓN*\n\n📱 *Instrucciones:*\n1. Abre WhatsApp en tu teléfono\n2. Ve a Ajustes → Dispositivos vinculados\n3. Toca Vincular un dispositivo\n4. Usa este código:\n\n🔢 *Código:* ${rawCode.match(/.{1,4}/g)?.join("-")}\n\n⚠️ *El código expira en 45 segundos*`
-                    }),
-                    footer: proto.Message.InteractiveMessage.Footer.create({
-                      text: "Presiona 'Copiar Código' para copiarlo fácilmente"
-                    }),
-                    nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.create({
-                      buttons: [
-                        {
-                          name: "cta_copy",
-                          buttonParamsJson: JSON.stringify({
-                            display_text: "📋 Copiar Código",
-                            id: "copy-jadibot-code",
-                            copy_code: rawCode
-                          })
-                        }
-                      ]
-                    })
-                  })
-                }
-              }
-            }, { quoted: m })
+            // Imagen URL
+            const imageUrl = 'https://cdn.russellxz.click/73109d7e.jpg'
+            const media = await prepareWAMessageMedia({ image: { url: imageUrl } }, { upload: conn.waUploadToServer })
+            
+            const header = proto.Message.InteractiveMessage.Header.fromObject({
+              hasMediaAttachment: true,
+              imageMessage: media.imageMessage
+            })
 
-            await conn.relayMessage(msg.key.remoteJid, msg.message, { messageId: msg.key.id })
+            // Crear mensaje interactivo con botones
+            const interactiveMessage = proto.Message.InteractiveMessage.fromObject({
+              header,
+              body: proto.Message.InteractiveMessage.Body.fromObject({
+                text: `🔐 *CÓDIGO DE VINCULACIÓN*\n\n📱 *Instrucciones:*\n1. Abre WhatsApp en tu teléfono\n2. Ve a Ajustes → Dispositivos vinculados\n3. Toca Vincular un dispositivo\n4. Usa este código:\n\n🔢 *Código:* ${rawCode.match(/.{1,4}/g)?.join("-")}\n\n⚠️ *El código expira en 45 segundos*`
+              }),
+              footer: proto.Message.InteractiveMessage.Footer.fromObject({
+                text: "Selecciona una opción para usar el código"
+              }),
+              nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.fromObject({
+                buttons: [
+                  {
+                    name: "cta_copy",
+                    buttonParamsJson: JSON.stringify({
+                      display_text: "📋 Copiar Código",
+                      copy_code: rawCode
+                    })
+                  },
+                  {
+                    name: "cta_url",
+                    buttonParamsJson: JSON.stringify({
+                      display_text: "📱 Seguir Canal",
+                      url: "https://whatsapp.com/channel/0029VaYourChannel"
+                    })
+                  }
+                ]
+              })
+            })
+
+            const msg = generateWAMessageFromContent(m.chat, { interactiveMessage }, { userJid: conn.user.jid, quoted: m })
+            await conn.relayMessage(m.chat, msg.message, { messageId: msg.key.id })
 
             console.log(`Código de vinculación enviado: ${rawCode}`)
 
           } catch (err) {
             console.error('Error al obtener pairing code:', err)
             await conn.sendMessage(m.chat, { react: { text: '❌', key: m.key } })
-            await conn.reply(m.chat, `Error: ${err.message}`, m, ctxErr)
+            await conn.reply(m.chat, `Error: ${err.message}`, m)
           }
         }, 3000)
       }
@@ -186,7 +178,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     } catch (error) {
       console.error('Error al crear socket:', error)
       await conn.sendMessage(m.chat, { react: { text: '❌', key: m.key } })
-      await conn.reply(m.chat, `Error critico: ${error.message}`, m, ctxErr)
+      await conn.reply(m.chat, `Error critico: ${error.message}`, m)
     }
   }
 
