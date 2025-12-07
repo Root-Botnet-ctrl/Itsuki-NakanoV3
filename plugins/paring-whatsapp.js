@@ -5,21 +5,20 @@ import { protoType, serialize, makeWASocket } from '../lib/simple.js'
 import path from 'path'
 import fs from 'fs'
 
-
 if (!global.subbots) global.subbots = []
 
 let handler = async (m, { conn, args, usedPrefix, command }) => {
   const ctxErr = global.rcanalx || {}
   const ctxOk = global.rcanalr || {}
-  
+
   let userName = args[0] ? args[0] : m.sender.split("@")[0]
   const folder = path.join('./itsuki/Subbots', userName)
-  
+
   if (global.subbots.length >= 10) {
     await conn.sendMessage(m.chat, { react: { text: '❌', key: m.key } })
     return conn.reply(m.chat, 'Se ha alcanzado el maximo de subbots permitidos.', m, ctxErr)
   }
-  
+
   const existing = global.subbots.find(c => c.id === userName && c.connection === 'open')
   if (existing) {
     await conn.sendMessage(m.chat, { react: { text: '⚠️', key: m.key } })
@@ -49,7 +48,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
       sock.id = userName
       sock.saveCreds = saveCreds
       let pairingCodeSent = false
-      
+
       try {
         protoType()
         serialize()
@@ -57,24 +56,23 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
           console.log(e)
       }
 
-let handlerr
-try {
-  ({ handler: handlerr } = await import('../handler.js'))
-} catch (e) {
-  console.error('[Handler] Error importando handler:', e)
-}
-        
-sock.ev.on("messages.upsert", async (chatUpdate) => {
-  try {
-    if (!handlerr) return
-    await handlerr.call(sock, chatUpdate)
-  } catch (e) {
-    console.error("Error en handler subbot:", e)
-  }
-})
-       
+      let handlerr
+      try {
+        ({ handler: handlerr } = await import('../handler.js'))
+      } catch (e) {
+        console.error('[Handler] Error importando handler:', e)
+      }
+
+      sock.ev.on("messages.upsert", async (chatUpdate) => {
+        try {
+          if (!handlerr) return
+          await handlerr.call(sock, chatUpdate)
+        } catch (e) {
+          console.error("Error en handler subbot:", e)
+        }
+      })
+
       sock.ev.on('creds.update', saveCreds)
-                
 
       sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect } = update
@@ -83,22 +81,22 @@ sock.ev.on("messages.upsert", async (chatUpdate) => {
           sock.__sessionOpenAt = Date.now()
           sock.connection = 'open'
           sock.uptime = new Date()
-          
+
           global.subbots = global.subbots.filter(c => c.id !== userName)
           global.subbots.push(sock)
-          
+
           await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key } })
           await conn.reply(m.chat, 'Subbot conectado exitosamente', m, ctxOk)
         }
 
         if (connection === 'close') {
           global.subbots = global.subbots.filter(c => c.id !== userName)
-          
+
           const reason = lastDisconnect?.error?.output?.statusCode || 0
-          
+
           await conn.sendMessage(m.chat, { react: { text: '⚠️', key: m.key } })
           await conn.reply(m.chat, `Conexion cerrada. Razon: ${reason}`, m, ctxErr)
-          
+
           if (reason !== DisconnectReason.loggedOut) {
             setTimeout(() => {
               start()
@@ -118,10 +116,26 @@ sock.ev.on("messages.upsert", async (chatUpdate) => {
 
       if (!state.creds?.registered && !pairingCodeSent) {
         pairingCodeSent = true
+        
+        // Frase de preparación
+        await conn.reply(m.chat, 'Preparando código de vinculación...', m, ctxOk)
+        
         setTimeout(async () => {
           try {
             const code = await sock.requestPairingCode(userName)
-            await conn.reply(m.chat, `Codigo para emparejar:\n\n${code}`, m, ctxOk)
+            
+            // Enviar el código con frase de vinculación
+            await conn.reply(m.chat, 
+              `📱 *Para vincular tu WhatsApp:*\n\n1. Abre WhatsApp en tu teléfono\n2. Ve a Ajustes → Dispositivos vinculados\n3. Toca Vincular un dispositivo\n4. Ingresa este código de 8 dígitos:\n\n🔢 *${code}*\n\nEl código expira en unos minutos.`, 
+              m, ctxOk
+            )
+            
+            // Enviar emoji de reacción
+            await conn.sendMessage(m.chat, { react: { text: '📱', key: m.key } })
+            
+            // Enviar el código por separado
+            await conn.reply(m.chat, `Código para emparejar:\n\n${code}`, m, ctxOk)
+            
           } catch (err) {
             console.error('Error al obtener pairing code:', err)
             await conn.reply(m.chat, `Error: ${err.message}`, m, ctxErr)
