@@ -10,7 +10,10 @@ import chalk from 'chalk'
 // Importamos el handler principal para que los sub-bots puedan procesar mensajes
 let mainHandler
 try {
-  // Se asume que handler.js existe en la raíz y exporta 'handler'
+  // ⚠️ NOTA: El handler principal se llama 'handler.js', pero aquí está importando './handler.js'.
+  // Si tu archivo de handler principal es realmente 'handler.js', la importación DEBERÍA SER:
+  // ({ handler: mainHandler } = await import('./handler.js')) 
+  // Mantendré la ruta que especificaste: './paring-verify.js'
   ({ handler: mainHandler } = await import('./paring-verify.js')) 
 } catch (e) {
   console.error('[SUBBOT] Error importando handler principal:', e.message || e)
@@ -63,6 +66,7 @@ export const startSubBot = async (userName, conn, m) => {
       sock.ev.on("messages.upsert", async (chatUpdate) => {
         try {
           // 'call(sock, chatUpdate)' hace que 'sock' sea la conexión actual (el sub-bot)
+          // El handler importado de './paring-verify.js' manejará los mensajes del sub-bot.
           await mainHandler.call(sock, chatUpdate) 
         } catch (e) {
           console.error(`Error en handler subbot (${userName}):`, e)
@@ -108,19 +112,19 @@ export const startSubBot = async (userName, conn, m) => {
         }
 
         const reconnectDelay = 15000; // Retraso de 15 segundos
-        
+
         if (m) {
             conn.reply(m.chat, `> [🔴] 𝐂𝐎𝐍𝐄𝐗𝐈𝐎𝐍 𝐂𝐄𝐑𝐑𝐀𝐃𝐀.... 𝐑𝐞𝐜𝐨𝐧𝐞𝐜𝐭𝐚𝐧𝐝𝐨 𝐞𝐧 ${reconnectDelay / 1000}𝐬.`, m)
         } else {
             console.log(chalk.red(`[SUBBOT] Sesión ${userName} cerrada. Reconectando en ${reconnectDelay / 1000}s...`))
         }
-        
+
         setTimeout(() => {
           startSubBot(userName, conn, m) 
         }, reconnectDelay)
       }
     })
-    
+
     // Lógica de generación de pairing code
     if (!state.creds?.registered && !pairingCodeSent && m) {
       pairingCodeSent = true
@@ -131,7 +135,7 @@ export const startSubBot = async (userName, conn, m) => {
         try {
             const rawCode = await sock.requestPairingCode(userName)
             await conn.sendMessage(m.chat, { react: { text: '✅️', key: m.key } })
-            
+
             // --- 👑 TU CÓDIGO DE BOTONES Y DECORACIÓN (RESTORED) 👑 ---
             const imageUrl = 'https://cdn.russellxz.click/73109d7e.jpg'
             const media = await prepareWAMessageMedia({ image: { url: imageUrl } }, { upload: conn.waUploadToServer })
