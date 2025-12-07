@@ -31,10 +31,16 @@ async function makeFkontak() {
 }
 
 let handler = async(m, { usedPrefix, conn, text }) => {
+  // Emoji de reacción inicial
+  try { await conn.sendMessage(m.chat, { react: { text: '🕑', key: m.key } }) } catch {}
+  
 const limit = 20
 // --- VERSIÓN ORIGINAL ---
 // Leemos desde global.subbots
 const users = [...new Set([...global.subbots.filter((conn) => conn.user && conn.ws?.socket && conn.ws.socket.readyState !== ws.CLOSED).map((conn) => conn)])];
+
+// Emoji cuando se están procesando los bots
+try { await conn.sendMessage(m.chat, { react: { text: '🤖', key: m.key } }) } catch {}
 
 function dhms(ms) {
   var segundos = Math.floor(ms / 1000);
@@ -96,26 +102,33 @@ const sesionesGuardadas = await info(jadi)
 
 let cap = `# 📚 *Subbots activos : ${totalUsers}/100*\n\n`
 cap += `💾 *Sesiones guardadas:* ${sesionesGuardadas}\n`
-cap += `🟢 *Sesiones activas:* ${totalUsers}\n\n`
-if (totalUsers > limit) {
-    cap += `> *[🧃] El número de subbots activos supera el límite de ${limit} por lo que no se mostrará la lista con los tags.*\n\n`
-    // Aún así mostrar algunos (los primeros 5)
-    const limitedUsers = users.slice(0, 5)
-    limitedUsers.forEach((v, index) => {
-        const jid = v.user.jid.replace(/[^0-9]/g, '')
-        const name = v.user.name || 'itsuki-sub'
-        const uptime = v.uptime ? dhms(Date.now() - v.uptime) : "0s"
+cap += `🟢 *Sesiones activas:* ${totalUsers}\n`
 
-        cap += `🌷 *Itsuki-V3 Sub*  *[ ${index + 1} ]*\n`
-        cap += `🌱 Tag : +${jid}\n`
-        cap += `🆔️ ID : wa.me/${jid}?text=.menu\n`
-        cap += `🤖 Bot : Itsuki-V3 Sub\n`
-        cap += `🕑 Uptime : ${uptime}\n`
-        cap += `────────────────\n\n`
-    })
-    cap += `*... y ${totalUsers - 5} bots más*`
+// ESPACIO ELIMINADO - si no hay bots, no mostrar nada más
+if (totalUsers > 0) {
+    if (totalUsers > limit) {
+        cap += `\n> *[🧃] El número de subbots activos supera el límite de ${limit} por lo que no se mostrará la lista con los tags.*\n\n`
+        // Aún así mostrar algunos (los primeros 5)
+        const limitedUsers = users.slice(0, 5)
+        limitedUsers.forEach((v, index) => {
+            const jid = v.user.jid.replace(/[^0-9]/g, '')
+            const name = v.user.name || 'itsuki-sub'
+            const uptime = v.uptime ? dhms(Date.now() - v.uptime) : "0s"
+
+            cap += `🌷 *Itsuki-V3 Sub*  *[ ${index + 1} ]*\n`
+            cap += `🌱 Tag : +${jid}\n`
+            cap += `🆔️ ID : wa.me/${jid}?text=.menu\n`
+            cap += `🤖 Bot : Itsuki-V3 Sub\n`
+            cap += `🕑 Uptime : ${uptime}\n`
+            cap += `────────────────\n\n`
+        })
+        cap += `*... y ${totalUsers - 5} bots más*`
+    } else {
+        cap += `\n${botList}`
+    }
 } else {
-    cap += botList
+    // Cuando no hay bots, agregar un mensaje amigable sin espacio extra
+    cap += `\n\n📭 *No hay subbots activos en este momento.*\n😊 *¡Sé el primero en crear uno!*`
 }
 
 // Obtener menciones para los tags
@@ -123,6 +136,9 @@ const mentions = users.map(v => v.user.jid)
 
 // Obtener el quoted especial
 const fkontak = await makeFkontak()
+
+// Emoji de éxito cuando se va a enviar el mensaje
+try { await conn.sendMessage(m.chat, { react: { text: '✅️', key: m.key } }) } catch {}
 
 // Crear botón del canal oficial
 const nativeButtons = [
@@ -139,7 +155,7 @@ try {
   // Usar la imagen del fkontak como imagen principal
   const imageUrl = "https://cdn.russellxz.click/a1d42213.jpg"
   const media = await prepareWAMessageMedia({ image: { url: imageUrl } }, { upload: conn.waUploadToServer })
-  
+
   const header = proto.Message.InteractiveMessage.Header.fromObject({
     hasMediaAttachment: true,
     imageMessage: media.imageMessage
