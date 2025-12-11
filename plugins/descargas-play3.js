@@ -112,6 +112,8 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
   }
 }
 
+//Comando Play4 Fixieado por ZzawX
+
 handler.command = handler.help = ['play3', 'play4']
 handler.tags = ['downloader']
 handler.group = true
