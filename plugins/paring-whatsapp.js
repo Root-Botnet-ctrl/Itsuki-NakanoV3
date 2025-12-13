@@ -1,7 +1,7 @@
 import pkg from '@whiskeysockets/baileys'
 const { useMultiFileAuthState, fetchLatestBaileysVersion, Browsers, DisconnectReason, generateWAMessageFromContent, proto, prepareWAMessageMedia } = pkg
 import pino from "pino"
-import { protoType, serialize, makeWASocket } from '../lib/simple.js'
+import { protoType, serialize, makeWASocket } from './lib/simple.js'
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
