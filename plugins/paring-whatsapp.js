@@ -5,7 +5,7 @@ import { protoType, serialize, makeWASocket } from '../lib/simple.js'
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
-import { startSubBot } from '../../lib/subs.js'
+import { startSubBot } from './lib/subs.js'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
