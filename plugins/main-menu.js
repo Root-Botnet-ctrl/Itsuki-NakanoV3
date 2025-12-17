@@ -26,7 +26,7 @@ let handler = async (m, { conn, usedPrefix: _p }) => {
 > ੭੭﹙❐﹚ \`Uptime :\` *${await getUptime()}*
 > ੭੭﹙❐﹚ \`RAM :\` *${(process.memoryUsage().rss / 1024 / 1024).toFixed(2)}* MB
 > ੭੭﹙❐﹚ \`Plugins :\` *${help.length}*
-> ੭੭﹙❐﹚ \`Owner :\` *@leoDev*
+> ੭੭﹙❐﹚ \`Owner :\` *@Root-Botnet*
 > ੭੭﹙❐﹚ \`Mode :\` *${global.opts['self'] ? 'Private' : 'Public'}*
 
 `
