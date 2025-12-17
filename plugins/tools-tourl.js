@@ -123,7 +123,7 @@ async function sendChooser(m, conn, usedPrefix) {
   let fkontak = await makeFkontak()
   if (!fkontak) fkontak = m
   try {
-    const avatarUrl = 'https://files.catbox.moe/jem7nf.jpg'
+    const avatarUrl = 'https://i.postimg.cc/CKttfDk8/1766012371114.jpg'
     const device = await getDevice(m.key.id)
     if (device !== 'desktop' && device !== 'web') {
       const media = await prepareWAMessageMedia({ image: { url: avatarUrl } }, { upload: conn.waUploadToServer })
