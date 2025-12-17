@@ -6,7 +6,7 @@ let handler = async (m, { conn }) => {
 
     const menuText = `> *@Hola Soy Deyner Creador De Itsuki Nakano La Bot Que Estas Usando*\n\n> sᴇʟᴇᴄɪᴏɴᴀ ᴜɴ ᴍᴇᴛᴏᴅᴏ ᴘᴀʀᴀ ᴄᴏᴍᴜɴɪᴄᴀʀᴛᴇ ᴄᴏɴᴍɪɢᴏ 🧃:`
 
-    const imageUrl = 'https://cdn.russellxz.click/892b3d23.jpg'
+    const imageUrl = 'https://i.postimg.cc/CKttfDk8/1766012371114.jpg'
 
     const nativeButtons = [
       {
@@ -54,7 +54,7 @@ let handler = async (m, { conn }) => {
   } catch (e) {
     console.error('❌ Error en el comando owner:', e)
     await conn.sendMessage(m.chat, {
-      text: `❌ *Error al cargar la información del creador*\n\n🔗 Contacta directamente: https://wa.me/573187418668\n\n⚠️ *Error:* ${e.message}`
+      text: `❌ *Error al cargar la información del creador*\n\n🔗 Contacta directamente: https://wa.me/51906278352\n\n⚠️ *Error:* ${e.message}`
     }, { quoted: m })
   }
 }
