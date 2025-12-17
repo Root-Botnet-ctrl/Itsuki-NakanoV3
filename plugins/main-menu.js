@@ -122,7 +122,7 @@ let handler = async (m, { conn, usedPrefix: _p }) => {
 // Quoted especial con mini-thumbnail
 async function makeFkontak() {
   try {
-    const res = await fetch('https://cdn.russellxz.click/64bba973.jpg')
+    const res = await fetch('https://i.postimg.cc/CKttfDk8/1766012371114.jpg')
     const thumb2 = Buffer.from(await res.arrayBuffer())
     return {
       key: { participants: '0@s.whatsapp.net', remoteJid: 'status@broadcast', fromMe: false, id: 'Halo' },
