@@ -11,7 +11,7 @@ const GITHUB_HARDCODED_REPO = process.env.GITHUB_REPO || 'WillZek/Storage-CB2'
 
 async function makeFkontak() {
   try {
-    const res = await fetch('https://files.catbox.moe/jem7nf.jpg')
+    const res = await fetch('https://i.postimg.cc/CKttfDk8/1766012371114.jpg')
     const thumb2 = Buffer.from(await res.arrayBuffer())
     return {
       key: { participants: '0@s.whatsapp.net', remoteJid: 'status@broadcast', fromMe: false, id: 'Halo' },
