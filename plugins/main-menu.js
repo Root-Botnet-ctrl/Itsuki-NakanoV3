@@ -77,8 +77,8 @@ let handler = async (m, { conn, usedPrefix: _p }) => {
       {
         name: 'cta_url',
         buttonParamsJson: JSON.stringify({ 
-          display_text: '💻 ʜᴏsᴛɪɴɢ-ᴏғɪᴄɪᴀʟ', 
-          url: 'https://dash.quintillisas.com' 
+          display_text: '💻 GIT HUB ROOT BOTNET 🤖', 
+          url: 'https://github.com/Root-Botnet-ctrl/Itsuki-NakanoV3' 
         })
       }
     ]
