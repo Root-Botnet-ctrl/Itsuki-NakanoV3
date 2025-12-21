@@ -156,7 +156,7 @@ const handler = async (m, { conn, command, usedPrefix }) => {
     const form = new FormData()
     form.append('file', fs.createReadStream(finalPath))
 
-    const res = await axios.post('https://catbox.moe/user/api.php'', form, {
+    const res = await axios.post('https://catbox.moe/user/api.php', form, {
       headers: form.getHeaders(),
       maxContentLength: Infinity,
       maxBodyLength: Infinity,
