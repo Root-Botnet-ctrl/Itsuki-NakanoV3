@@ -9,7 +9,7 @@ const ROOT = path.resolve(__dirname, '..')
 
 async function makeFkontak() {
   try {
-    const res = await fetch('https://raw.githubusercontent.com/WillZek/Storage-CB2/main/images/d110942e81b3.jpg')
+    const res = await fetch('https://github.com/Root-Botnet-ctrl/Itsuki-NakanoV3/raw/refs/heads/main/src/Images/55111188_p0.jpg')
     const thumb2 = Buffer.from(await res.arrayBuffer())
     return {
       key: { participants: '0@s.whatsapp.net', remoteJid: 'status@broadcast', fromMe: false, id: 'Halo' },
